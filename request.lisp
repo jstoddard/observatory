@@ -96,7 +96,9 @@
   (usocket:with-client-socket (socket stream (resource-server res) (resource-port res))
     (let ((gem-stream (cl+ssl:make-ssl-client-stream stream
 						     :external-format '(:utf-8 :eol-style :lf)
-						     :unwrap-stream-p t))
+						     :unwrap-stream-p t
+						     :verify nil
+						     :hostname (resource-server res)))
 	  doc)
       (unwind-protect
 	   (progn

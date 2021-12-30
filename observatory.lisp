@@ -116,5 +116,4 @@
 
 (defun observatory-main ()
   "Display and run Gemini Client."
-  (setf cl+ssl:*make-ssl-client-stream-verify-default* nil) ; Gemini certs usually self-signed
   (run-frame-top-level (make-application-frame 'observatory-app)))
