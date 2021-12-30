@@ -8,7 +8,7 @@ Observatory is a simple Gemini client written in Common Lisp using McCLIM. It cu
 
 Place the files somewhere asdf can find them and evaluate `(asdf:load-system "observatory")`. If you have Quicklisp installed, you can have it handle that for you: Make an "observatory" subdirectory in Quicklisp's local-projects directory, place the files into it, and evaluate `(ql:quickload "observatory")`.
 
-Once the system is loaded, you can run the ray tracer by evaluating `(rtiow:observatory)`.
+Once the system is loaded, you can run Observatory by evaluating `(observatory:observatory-main)`.
 
 ## Known Issues
 
