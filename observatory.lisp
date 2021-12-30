@@ -56,9 +56,9 @@
     (if res
 	(if (string= (resource-protocol res) "gemini")
 	    (with-output-as-presentation (t line 'link-line)
-	      (format t "~a: " (resource-get-uri res)))
-	    (format t "~a: " (resource-get-uri res)))))
-  (format t "~a~%" (link-line-description line)))
+	      (format t "~a" (resource-get-uri res)))
+	    (format t "~a" (resource-get-uri res)))))
+  (format t "-- ~a~%" (link-line-description line)))
 
 (defmethod write-doc-part ((line mono-line))
   (with-text-style (t *mono-style*)

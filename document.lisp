@@ -76,7 +76,8 @@
 			      :uri (parse-uri
 				    (ensure-complete-uri (subseq trimmed-line 0 pos) res))
 			      :description (if (and pos (< pos (length trimmed-line)))
-					       (subseq trimmed-line (+ pos 1))
+					       (string-trim +whitespace+
+							    (subseq trimmed-line (+ pos 1)))
 					       ""))))
 
 (defclass toggle-line (doc-part)
@@ -182,6 +183,13 @@
 			       (format nil "Server returned error code ~a: ~a."
 				       (subseq line 0 2)
 				       (subseq line 3))))))
+
+(defun make-bad-protocol-document (line)
+  (make-document :response-code 0
+		 :type :error
+		 :parts (list (make-heading1-line "Error")
+			      (make-text-line
+			       (format nil "Protocol not supported: ~a." line)))))
 
 (defun make-gemini-document (line)
   (make-document :response-code (parse-integer line :end 2 :junk-allowed t)

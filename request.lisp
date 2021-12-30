@@ -8,17 +8,18 @@
   (raw-uri nil)
   (protocol "gemini")
   (server "gemini.circumlunar.space")
-  (port 1965)
+  (port nil)
   (page "/"))
 
 (defun resource-get-uri (res)
   "Rebuild uri from components of resource res and return as string."
   (with-output-to-string (uri)
-    (if (and (string= (resource-protocol res) "gemini") (= (resource-port res) 1965))
-	(format uri "~a://~a~a" (resource-protocol res) (resource-server res) (resource-page res))
+    (if (resource-port res)
 	(format uri "~a://~a:~a~a"
 		(resource-protocol res) (resource-server res)
-		(resource-port res) (resource-page res)))))
+		(resource-port res) (resource-page res))
+	(format uri "~a://~a~a"
+		(resource-protocol res) (resource-server res) (resource-page res)))))
 
 (defun parse-protocol (uri)
   "Return the part of uri prior to the first colon."
@@ -83,7 +84,7 @@
 	(page (parse-page uri))
 	(res nil))
     (when (not protocol) (setf protocol "gemini"))
-    (when (and server (string= protocol "gemini"))
+    (when server
       (setf res (make-resource :raw-uri uri :protocol protocol :server server :page page))
       (when port (setf (resource-port res) port)))
     res))
@@ -93,7 +94,11 @@
 ;;; information whether request is successful or not.
 (defun get-gemini-page (res)
   "Request page at uri identified by resource res and output to stream out."
-  (usocket:with-client-socket (socket stream (resource-server res) (resource-port res))
+  (when (not (string= (resource-protocol res) "gemini"))
+    (return-from get-gemini-page (make-bad-protocol-document (resource-protocol res))))
+  (usocket:with-client-socket (socket stream
+				      (resource-server res)
+				      (or (resource-port res) 1965))
     (let ((gem-stream (cl+ssl:make-ssl-client-stream stream
 						     :external-format '(:utf-8 :eol-style :lf)
 						     :unwrap-stream-p t
