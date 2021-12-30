@@ -7,6 +7,7 @@
 (defparameter *h2-style* (make-text-style :sans-serif :bold :very-large))
 (defparameter *h3-style* (make-text-style :sans-serif :bold :large))
 (defparameter *mono-style* (make-text-style :fix :roman :normal))
+(defparameter *link-color* +blue+)
 
 (define-application-frame observatory-app ()
   ((active-uri :initform "gemini://gemini.circumlunar.space/" :accessor active-uri))
@@ -55,10 +56,11 @@
   (let ((res (link-line-uri line)))
     (if res
 	(if (string= (resource-protocol res) "gemini")
-	    (with-output-as-presentation (t line 'link-line)
-	      (format t "~a" (resource-get-uri res)))
+	    (with-drawing-options (t :ink *link-color*)
+	      (with-output-as-presentation (t line 'link-line)
+		(format t "~a" (resource-get-uri res))))
 	    (format t "~a" (resource-get-uri res)))))
-  (format t "-- ~a~%" (link-line-description line)))
+  (format t " -- ~a~%" (link-line-description line)))
 
 (defmethod write-doc-part ((line mono-line))
   (with-text-style (t *mono-style*)
