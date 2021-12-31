@@ -95,7 +95,7 @@
 (defun get-gemini-page (res)
   "Request page at uri identified by resource res and output to stream out."
   (when (not (string= (resource-protocol res) "gemini"))
-    (return-from get-gemini-page (make-bad-protocol-document (resource-protocol res))))
+    (return-from get-gemini-page (make-bad-protocol-document (resource-protocol res) res)))
   (usocket:with-client-socket (socket stream
 				      (resource-server res)
 				      (or (resource-port res) 1965))
@@ -109,7 +109,7 @@
 	   (progn
 	     (format gem-stream "~a~c~c" (resource-get-uri res) #\Return #\Linefeed)
 	     (force-output gem-stream)
-	     (setf doc (parse-response-header (read-line gem-stream nil)))
+	     (setf doc (parse-response-header (read-line gem-stream nil) res))
 	     (loop :for line = (read-line gem-stream nil)
 		   :while line :do
 		     (parse-line line doc res)))

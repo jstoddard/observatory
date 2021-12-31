@@ -26,7 +26,7 @@
    (source :initform "" :initarg :source :accessor document-source)
    (parts :initform () :initarg :parts :accessor document-parts)))
 
-(defun make-document (&key (resource "gemini://gemini.circumlunar.space/")
+(defun make-document (&key (resource (parse-uri "gemini://gemini.circumlunar.space/"))
 			(response-code 0) (meta "") (type :other) (source "") (parts nil))
   (make-instance 'document
 		 :resource resource
@@ -161,22 +161,25 @@
 
 ;;; Helper functions for parse-response-header
 
-(defun make-unrecognized-response-document ()
-  (make-document :response-code 0
+(defun make-unrecognized-response-document (res)
+  (make-document :resource res
+		 :response-code 0
 		 :type :error
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line "Unrecognized response from server."))))
 
-(defun make-unsupported-document (line)
-  (make-document :response-code (parse-integer line :end 2 :junk-allowed t)
+(defun make-unsupported-document (line res)
+  (make-document :resource res
+		 :response-code (parse-integer line :end 2 :junk-allowed t)
 		 :type :error
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line
 			       (format nil "Unsupported file type: ~a."
 				       (subseq line 3))))))
 
-(defun make-error-document (line)
-  (make-document :response-code (parse-integer line :end 2 :junk-allowed t)
+(defun make-error-document (line res)
+  (make-document :resource res
+		 :response-code (parse-integer line :end 2 :junk-allowed t)
 		 :type :error
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line
@@ -184,19 +187,22 @@
 				       (subseq line 0 2)
 				       (subseq line 3))))))
 
-(defun make-bad-protocol-document (line)
-  (make-document :response-code 0
+(defun make-bad-protocol-document (line res)
+  (make-document :resource res
+		 :response-code 0
 		 :type :error
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line
 			       (format nil "Protocol not supported: ~a." line)))))
 
-(defun make-gemini-document (line)
-  (make-document :response-code (parse-integer line :end 2 :junk-allowed t)
+(defun make-gemini-document (line res)
+  (make-document :resource res
+		 :response-code (parse-integer line :end 2 :junk-allowed t)
 		 :type :gemini))
 
-(defun make-text-document (line)
-  (make-document :response-code (parse-integer line :end 2 :junk-allowed t)
+(defun make-text-document (line res)
+  (make-document :resource res
+		 :response-code (parse-integer line :end 2 :junk-allowed t)
 		 :type :text))
 
 (defun is-utf-8? (header-line)
@@ -206,16 +212,16 @@
 	  nil)
       t)) ; if no charset indicated, default is utf8
 
-(defun parse-response-header (line)
+(defun parse-response-header (line res)
   "Return document class based on provided header."
   (setf *parser-state* :normal)
   (let ((status-digit (parse-integer (subseq line 0 1) :junk-allowed t)))
     (cond
-      ((not status-digit) (make-unrecognized-response-document))
-      ((/= status-digit 2) (make-error-document line))
-      ((< (length line) 4) (make-gemini-document line))
+      ((not status-digit) (make-unrecognized-response-document res))
+      ((/= status-digit 2) (make-error-document line res))
+      ((< (length line) 4) (make-gemini-document line res))
       ((and (search "text/gemini" line) (is-utf-8? line))
-       (make-gemini-document line))
+       (make-gemini-document line res))
       ((and (search "text/" line) (is-utf-8? line))
-       (make-text-document line))
-      (t (make-unsupported-document line)))))
+       (make-text-document line res))
+      (t (make-unsupported-document line res)))))
