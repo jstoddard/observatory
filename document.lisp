@@ -235,8 +235,8 @@
 		 :type :text))
 
 (defun is-utf-8? (header-line)
-  (if (search "charset" header-line)
-      (if (search "utf-8" header-line)
+  (if (search "charset" header-line :test #'char-equal)
+      (if (search "utf-8" header-line :test #'char-equal)
 	  t
 	  nil)
       t)) ; if no charset indicated, default is utf8
