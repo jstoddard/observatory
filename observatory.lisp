@@ -36,7 +36,7 @@
   (apply #'concatenate 'string
 	 (map 'list #'(lambda (c)
 			(if (not (alphanumericp c))
-			    (format nil "%~2x" (char-code c))
+			    (format nil "%~2,'0x" (char-code c))
 			    (string c)))
 	      str)))
 
@@ -76,7 +76,13 @@
 			    ;("Save" :command com-save)
 			    ("Quit" :command com-quit)))
 
+;;; Make uri-input field active when application frame is run
+
+(defmethod run-frame-top-level :before ((frame observatory-app) &key &allow-other-keys)
+  (stream-set-input-focus (find-pane-named frame 'uri-input)))
+
 ;;; TODO: Implement this
+
 (define-observatory-app-command (com-save :name t)
     ()
   (let ((filename (subseq (active-uri *application-frame*)
@@ -87,6 +93,8 @@
 (define-observatory-app-command (com-quit :name t)
     ()
   (frame-exit *application-frame*))
+
+;;; Document display functions
 
 (defmethod write-doc-part ((line doc-part))
   (format t "~a~%" (doc-part-text line)))
