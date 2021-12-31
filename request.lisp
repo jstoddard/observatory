@@ -96,22 +96,28 @@
   "Request page at uri identified by resource res and output to stream out."
   (when (not (string= (resource-protocol res) "gemini"))
     (return-from get-gemini-page (make-bad-protocol-document (resource-protocol res) res)))
-  (usocket:with-client-socket (socket stream
-				      (resource-server res)
-				      (or (resource-port res) 1965))
-    (let ((gem-stream (cl+ssl:make-ssl-client-stream stream
-						     :external-format '(:utf-8 :eol-style :lf)
-						     :unwrap-stream-p t
-						     :verify nil
-						     :hostname (resource-server res)))
-	  doc)
-      (unwind-protect
-	   (progn
-	     (format gem-stream "~a~c~c" (resource-get-uri res) #\Return #\Linefeed)
-	     (force-output gem-stream)
-	     (setf doc (parse-response-header (read-line gem-stream nil) res))
-	     (loop :for line = (read-line gem-stream nil)
-		   :while line :do
-		     (parse-line line doc res)))
-	(close gem-stream))
-      doc)))
+  (handler-case
+      (progn
+	(usocket:with-client-socket (socket stream
+					    (resource-server res)
+					    (or (resource-port res) 1965))
+	  (let ((gem-stream (cl+ssl:make-ssl-client-stream stream
+							   :external-format '(:utf-8 :eol-style :lf)
+							   :unwrap-stream-p t
+							   :verify nil
+							   :hostname (resource-server res)))
+		doc)
+	    (unwind-protect
+		 (progn
+		   (format gem-stream "~a~c~c" (resource-get-uri res) #\Return #\Linefeed)
+		   (force-output gem-stream)
+		   (setf doc (parse-response-header (read-line gem-stream nil) res))
+		   (loop :for line = (read-line gem-stream nil)
+			 :while line :do
+			   (parse-line line doc res)))
+	      (close gem-stream))
+	    doc)))
+    (error (err)
+      (make-observatory-error-document
+       (format nil "An error occurred while requesting the document: ~a." err)
+       res))))

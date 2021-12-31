@@ -181,11 +181,19 @@
   (make-document :resource res
 		 :response-code (parse-integer line :end 2 :junk-allowed t)
 		 :type :error
+		 :meta (subseq line 3)
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line
 			       (format nil "Server returned error code ~a: ~a."
 				       (subseq line 0 2)
 				       (subseq line 3))))))
+
+(defun make-observatory-error-document (line res)
+  (make-document :resource res
+		 :response-code 0
+		 :type :error
+		 :parts (list (make-heading1-line "Error")
+			      (make-text-line line))))
 
 (defun make-bad-protocol-document (line res)
   (make-document :resource res
@@ -194,6 +202,17 @@
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line
 			       (format nil "Protocol not supported: ~a." line)))))
+
+(defun make-redirect-document (line res)
+  (make-document :resource res
+		 :response-code (parse-integer line :end 2 :junk-allowed t)
+		 :type :redirect
+		 :meta (string-trim +whitespace+ (subseq line 3))
+		 :parts (list (make-heading1-line "Redirect")
+			      (make-text-line
+			       (format nil "The server returned status code ~a: ~a."
+				       (subseq line 0 2)
+				       (string-trim +whitespace+ (subseq line 3)))))))
 
 (defun make-gemini-document (line res)
   (make-document :resource res
@@ -218,6 +237,7 @@
   (let ((status-digit (parse-integer (subseq line 0 1) :junk-allowed t)))
     (cond
       ((not status-digit) (make-unrecognized-response-document res))
+      ((= status-digit 3) (make-redirect-document line res))
       ((/= status-digit 2) (make-error-document line res))
       ((< (length line) 4) (make-gemini-document line res))
       ((and (search "text/gemini" line) (is-utf-8? line))

@@ -104,7 +104,7 @@
   (with-text-style (t *h3-style*)
     (format t "~a~%" (doc-part-text line))))
 
-(defmethod write-doc-part ((line ul-line))
+(defmethod write-doc-part ((line ul-line)) ; (code-char 8226) = #\Bullet
   (format t "~c~a~%" (code-char 8226) (subseq (doc-part-text line) 1)))
 
 (defun write-gemini-page (doc)
@@ -120,6 +120,9 @@
   (let ((res (parse-uri uri)))
     (when res
       (let ((doc (get-gemini-page res)))
+	(when (eql (document-type doc) :redirect)
+	  ;; Allow one redirect; a second will display a message to the user.
+	  (setf doc (get-gemini-page (parse-uri (document-meta doc)))))
 	(write-gemini-page doc)
 	(when (current-doc *application-frame*)
 	  (push-to-history (current-doc *application-frame*)))
@@ -128,7 +131,8 @@
 (defun go-back ()
   (let ((doc (pop-from-history)))
     (when doc
-      (write-gemini-page doc))))
+      (write-gemini-page doc)
+      (setf (current-doc *application-frame*) doc))))
 
 (define-observatory-app-command (com-homepage :name t)
     ()
