@@ -172,21 +172,22 @@
   (make-document :resource res
 		 :response-code (parse-integer line :end 2 :junk-allowed t)
 		 :type :error
+		 :meta (string-trim +whitespace+ (subseq line 3))
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line
 			       (format nil "Unsupported file type: ~a."
-				       (subseq line 3))))))
+				       (string-trim +whitespace+ (subseq line 3)))))))
 
 (defun make-error-document (line res)
   (make-document :resource res
 		 :response-code (parse-integer line :end 2 :junk-allowed t)
 		 :type :error
-		 :meta (subseq line 3)
+		 :meta (string-trim +whitespace+ (subseq line 3))
 		 :parts (list (make-heading1-line "Error")
 			      (make-text-line
-			       (format nil "Server returned error code ~a: ~a."
+			       (format nil "Server returned error code ~a: ~a"
 				       (subseq line 0 2)
-				       (subseq line 3))))))
+				       (string-trim +whitespace+ (subseq line 3)))))))
 
 (defun make-observatory-error-document (line res)
   (make-document :resource res
