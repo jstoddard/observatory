@@ -27,7 +27,20 @@
 (defun pop-from-history ()
   "Pop first entry from *back-button-history*, or return nil if none."
   (when *back-button-history*
-      (pop *back-button-history*)))
+    (pop *back-button-history*)))
+
+;;; Utility function for URL encoding
+;;; Based on a function from rosettacode.org
+(defun uri-encode (str)
+  "URI encode string str."
+  (apply #'concatenate 'string
+	 (map 'list #'(lambda (c)
+			(if (not (alphanumericp c))
+			    (format nil "%~2x" (char-code c))
+			    (string c)))
+	      str)))
+
+;;; Application GUI
 
 (define-application-frame observatory-app ()
   ((current-doc :initform nil :accessor current-doc))
@@ -114,7 +127,24 @@
       (write-doc-part line))
       (setf (gadget-value (find-pane-named *application-frame* 'uri-input))
 	    (resource-get-uri (document-resource doc)))
-      (scroll-extent app-pane 0 0)))
+    (scroll-extent app-pane 0 0)))
+
+(defun show-prompt (doc)
+  (format t "Input: ")
+  (let (response-field)
+   (with-output-as-gadget (t)
+     (setf response-field
+	   (make-pane
+	    'text-field
+	    :min-width 100
+	    :width 700
+	    :activate-callback
+	    #'(lambda (gadget)
+		(load-page (concatenate 'string
+					(resource-get-uri (document-resource doc))
+					"?"
+					(uri-encode (gadget-value gadget))))))))
+    (stream-set-input-focus response-field)))
 
 (defun load-page (uri)
   (let ((res (parse-uri uri)))
@@ -124,6 +154,8 @@
 	  ;; Allow one redirect; a second will display a message to the user.
 	  (setf doc (get-gemini-page (parse-uri (document-meta doc)))))
 	(write-gemini-page doc)
+	(when (eql (document-type doc) :input)
+	  (show-prompt doc))
 	(when (current-doc *application-frame*)
 	  (push-to-history (current-doc *application-frame*)))
 	(setf (current-doc *application-frame*) doc)))))

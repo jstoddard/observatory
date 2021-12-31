@@ -214,6 +214,15 @@
 				       (subseq line 0 2)
 				       (string-trim +whitespace+ (subseq line 3)))))))
 
+(defun make-input-document (line res)
+  (make-document :resource res
+		 :response-code (parse-integer line :end 2 :junk-allowed t)
+		 :type :input
+		 :meta (string-trim +whitespace+ (subseq line 3))
+		 :parts (list (make-heading1-line "Input Requested")
+			      (make-text-line
+			       (string-trim +whitespace+ (subseq line 3))))))
+
 (defun make-gemini-document (line res)
   (make-document :resource res
 		 :response-code (parse-integer line :end 2 :junk-allowed t)
@@ -237,6 +246,7 @@
   (let ((status-digit (parse-integer (subseq line 0 1) :junk-allowed t)))
     (cond
       ((not status-digit) (make-unrecognized-response-document res))
+      ((= status-digit 1) (make-input-document line res))
       ((= status-digit 3) (make-redirect-document line res))
       ((/= status-digit 2) (make-error-document line res))
       ((< (length line) 4) (make-gemini-document line res))
