@@ -69,7 +69,7 @@
   uri)
 
 (defun make-link-line (text res)
-  (let* ((trimmed-line (string-trim +whitespace+ (subseq text 3)))
+  (let* ((trimmed-line (string-trim +whitespace+ (subseq text 2)))
 	 (pos (min (or (position #\Space trimmed-line) (length trimmed-line))
 		   (or (position #\Tab trimmed-line) (length trimmed-line)))))
     (make-instance 'link-line :text text
