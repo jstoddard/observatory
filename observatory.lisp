@@ -138,20 +138,21 @@
     (scroll-extent app-pane 0 0)))
 
 (defun show-prompt (doc)
-  (format t "Input: ")
+;;  (format t "Input: ")
   (let (response-field)
-   (with-output-as-gadget (t)
-     (setf response-field
-	   (make-pane
-	    'text-field
-	    :min-width 100
-	    :width 700
-	    :activate-callback
-	    #'(lambda (gadget)
-		(load-page (concatenate 'string
-					(resource-get-uri (document-resource doc))
-					"?"
-					(uri-encode (gadget-value gadget))))))))
+    (surrounding-output-with-border (t)
+      (with-output-as-gadget (t)
+	(setf response-field
+	      (make-pane
+	       'text-field
+	       :min-width 100
+	       :width 700
+	       :activate-callback
+	       #'(lambda (gadget)
+		   (load-page (concatenate 'string
+					   (resource-get-uri (document-resource doc))
+					   "?"
+					   (uri-encode (gadget-value gadget)))))))))
     (stream-set-input-focus response-field)))
 
 (defun load-page (uri)
