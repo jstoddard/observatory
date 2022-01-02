@@ -197,6 +197,7 @@
 
 (define-observatory-app-command (com-manage-bookmarks :name t)
     ()
+  (push-to-history (current-doc *application-frame*))
   (bookmark-ui (get-frame-pane *application-frame* 'app)))
 
 (define-observatory-app-command (com-add-bookmark :name t)
