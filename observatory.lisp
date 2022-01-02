@@ -3,16 +3,6 @@
 
 (in-package :observatory)
 
-;; Homepage
-(defparameter *homepage* "gemini://gemini.circumlunar.space/")
-
-;; Styles
-(defparameter *h1-style* (make-text-style :sans-serif :bold :huge))
-(defparameter *h2-style* (make-text-style :sans-serif :bold :very-large))
-(defparameter *h3-style* (make-text-style :sans-serif :bold :large))
-(defparameter *mono-style* (make-text-style :fix :roman :normal))
-(defparameter *link-color* +blue+)
-
 ;; Recently visited documents
 (defvar *back-button-history* nil)
 (defparameter *max-history-pages* 10)
@@ -68,13 +58,19 @@
 
 (make-command-table 'observatory-menu-bar
 		    :errorp nil
-		    :menu '(("File" :menu file-menu)))
+		    :menu '(("File" :menu file-menu)
+			    ("Bookmarks" :menu bookmarks-menu)))
 
 (make-command-table 'file-menu
 		    :errorp nil
 		    :menu '(("Home" :command com-homepage)
 			    ;("Save" :command com-save)
 			    ("Quit" :command com-quit)))
+
+(make-command-table 'bookmarks-menu
+		    :errorp nil
+		    :menu '(("Add Bookmark" :command com-add-bookmark)
+			    ("Manage Bookmarks" :command com-manage-bookmarks)))
 
 ;;; Make uri-input field active when application frame is run
 
@@ -197,6 +193,57 @@
   (declare (ignore gadget))
   (go-back))
 
+;;; Bookmark commands
+
+(define-observatory-app-command (com-manage-bookmarks :name t)
+    ()
+  (bookmark-ui (get-frame-pane *application-frame* 'app)))
+
+(define-observatory-app-command (com-add-bookmark :name t)
+    ()
+  (restart-case
+      (when (current-doc *application-frame*)
+	(let (name
+	      (uri (resource-get-uri (document-resource (current-doc *application-frame*)))))
+	  (accepting-values (t :own-window t)
+	    (setf name (accept 'string :prompt "Bookmark Name:")))
+	  ;; for debugging
+;;	  (window-clear (get-frame-pane *application-frame* 'app))
+;;	  (format t "Received name ~a." name)
+	  (if name
+	      (make-bookmark uri name)
+	      (make-bookmark uri uri))
+	  (save-bookmarks *bookmarks-file*)))
+    (abort ()
+      (progn ; for debugging
+	(window-clear (get-frame-pane *application-frame* 'app))
+	(format t "Cancelled bookmark creation.")))))
+
+(define-observatory-app-command (com-load-bookmark :name t)
+    ((bmh 'bookmark-holder))
+  (load-page (getf (bookmark-holder-bookmark bmh) :uri)))
+
+(define-presentation-to-command-translator load-bookmarked-page
+  (bookmark-holder com-load-bookmark observatory-app
+	     :gesture :select
+	     :menu t)
+    (object) (list object))
+
+(define-observatory-app-command (com-delete-bookmark :name t)
+    ((bmh 'bookmark-holder))
+  (delete-bookmark (bookmark-holder-bookmark bmh))
+  (save-bookmarks *bookmarks-file*)
+  (bookmark-ui (get-frame-pane *application-frame* 'app)))
+
+(define-presentation-to-command-translator delete-bookmark
+    (bookmark-holder com-delete-bookmark observatory-app
+		     :gesture :delete
+		     :menu t)
+    (object) (list object))
+
+;; Run Application
+
 (defun observatory-main ()
   "Display and run Gemini Client."
+  (load-bookmarks *bookmarks-file*)
   (run-frame-top-level (make-application-frame 'observatory-app)))
