@@ -208,17 +208,11 @@
 	      (uri (resource-get-uri (document-resource (current-doc *application-frame*)))))
 	  (accepting-values (t :own-window t)
 	    (setf name (accept 'string :prompt "Bookmark Name:")))
-	  ;; for debugging
-;;	  (window-clear (get-frame-pane *application-frame* 'app))
-;;	  (format t "Received name ~a." name)
 	  (if name
 	      (make-bookmark uri name)
 	      (make-bookmark uri uri))
 	  (save-bookmarks *bookmarks-file*)))
-    (abort ()
-      (progn ; for debugging
-	(window-clear (get-frame-pane *application-frame* 'app))
-	(format t "Cancelled bookmark creation.")))))
+    (abort () nil)))
 
 (define-observatory-app-command (com-load-bookmark :name t)
     ((bmh 'bookmark-holder))
