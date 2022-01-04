@@ -64,7 +64,7 @@
 (make-command-table 'file-menu
 		    :errorp nil
 		    :menu '(("Home" :command com-homepage)
-			    ;("Save" :command com-save)
+			    ("Save" :command com-save)
 			    ("Quit" :command com-quit)))
 
 (make-command-table 'bookmarks-menu
@@ -81,10 +81,17 @@
 
 (define-observatory-app-command (com-save :name t)
     ()
-  (let ((filename (subseq (active-uri *application-frame*)
-			  (+ (position #\/ (active-uri *application-frame*) :from-end t) 1))))
-    (when (= (length filename) 0) (setf filename "untitled.gmi"))
-    (sf:select-file :title "Save" :prompt "Save As:" :dialog-type :save :default-fn filename)))
+  (let ((doc (current-doc *application-frame*)))
+    (when doc
+      (let* ((uri (resource-get-uri (document-resource (current-doc *application-frame*))))
+	     (filename (subseq uri (+ (position #\/ uri :from-end t) 1))))
+	(when (= (length filename) 0) (setf filename "untitled.gmi"))
+	(let ((selected-fn (sf:select-file :title "Save"
+					   :prompt "Save As:"
+					   :dialog-type :save
+					   :default-fn filename)))
+	  (when selected-fn
+	    (save-document doc selected-fn)))))))
 
 (define-observatory-app-command (com-quit :name t)
     ()

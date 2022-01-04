@@ -282,12 +282,15 @@
                     :foreground clim:+black+
                     :background clim:+white+
                     :text-cursor nil
-                    :display-time nil
+                    :display-time t ; nil in upstream, but doesn't seem to display files
                     :display-function #'display-files-dirs))
    (prompt-pane
     (clim:make-pane 'clim:label-pane
                     :label (file-selector-prompt clim:*application-frame*)
-                    #+:mcclim :max-width #+:mcclim '(:relative 0))) ; prevent the label stretching
+		    ;; prevent the label stretching
+		    ;; 2022-01-03 added (not :ccl) to conditional because this does not
+		    ;; appear to work in Clozure CL -Jeremiah
+                    #+(and :mcclim (not :ccl)) :max-width #+(and :mcclim (not :ccl)) '(:relative 0)))
    (show-hidden-files-check-box
     (clim:make-pane 'clim:toggle-button
                     :label "Show hidden files"

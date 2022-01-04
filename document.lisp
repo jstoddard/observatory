@@ -36,6 +36,13 @@
 		 :source source
 		 :parts parts))
 
+(defgeneric save-document (document filename)
+  (:documentation "Save document (source) to pathname given in filename."))
+
+(defmethod save-document ((document document) filename)
+    (with-open-file (stream filename :direction :output :if-exists :supersede)
+      (write-sequence (document-source document) stream)))
+
 (defclass doc-part ()
   ((text :initarg :text :initform "" :accessor doc-part-text))
   (:documentation "Base class for parts of a document."))
@@ -150,7 +157,10 @@
 
 (defun parse-line (line document resource)
   "Parse a line received from Gemini server."
-  (setf (document-source document) (concatenate 'string (document-source document) line))
+  (setf (document-source document) (concatenate 'string
+						(document-source document)
+						line
+						(string #\Newline)))
   (case (document-type document)
     (:text (setf (document-parts document)
 		 (append (document-parts document) (list (make-text-line line)))))
