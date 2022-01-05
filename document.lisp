@@ -64,6 +64,9 @@
 
 (defun ensure-complete-uri (uri res)
   "If uri is relative, add server, etc. from res and return absolute uri."
+  ;; Some gemini sites like to use // as a shorthand for gemini://
+  (when (and (> (length uri) 2) (string= (subseq uri 0 2) "//"))
+    (setf uri (concatenate 'string "gemini:" uri)))
   (unless (position #\: uri)
     (if (eql (char uri 0) #\/)
 	(setf uri (concatenate 'string

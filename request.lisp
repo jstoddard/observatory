@@ -21,6 +21,8 @@
 	(format uri "~a://~a~a"
 		(resource-protocol res) (resource-server res) (resource-page res)))))
 
+;; This still needs to be made more robust.  What if a uri with no protocol
+;; but with a port is given (e.g. site.org:1956/home.gmi)?
 (defun parse-protocol (uri)
   "Return the part of uri prior to the first colon."
   (let ((colon-pos (position #\: uri)))
